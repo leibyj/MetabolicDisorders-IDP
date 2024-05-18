@@ -116,7 +116,7 @@ def train_fold(split, fold, device, input_dim, data_path, label_path, out_path):
     all_labels = torch.empty(0)
     all_out = torch.empty(0)
     with torch.no_grad():
-        mod.eval()
+        opt_model.eval()
         for i, (dat, lab, fn) in enumerate(te_dl):
             b_out = torch.empty(0)
             for d in dat:
