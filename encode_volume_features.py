@@ -63,7 +63,8 @@ def masked_data_prep(pth, seg_net, dev):
     sub = tio.CropOrPad(mask_name = 'mask')(sub)
 
     # sample all patches, run through encoder to get outputs of interest
-    # sampler will throw ValueError if cropped image has any dimensions smaller than the patch dimensions
+    # sampler will throw ValueError if cropped image has any dimensions smaller than the patch dimensions, 
+    # the except will catch that and pad it to the minimum dimensions needed
     
     try:
         sampler = tio.GridSampler(subject=sub,patch_size=(28, 256, 256))
@@ -93,15 +94,12 @@ def masked_data_prep(pth, seg_net, dev):
     for i, patch in enumerate(sampler):
         # need to run one patch at a time due to GPU memory limitations... 
     	with torch.no_grad():
-            # Generic_UNet_predict returns: Predicted mask, skip connections (list), decoding block, decoder outputs (list)
+            
             skips, db = seg_net(patch.ct.data.unsqueeze(0).to(dev))
             pred_in = torch.empty(0)
             for s in skips:
                 p = torch.mean(s, axis = [2,3,4])
                 pred_in = torch.cat((pred_in, p.detach().cpu()), axis =-1)
-            # cat decoding block too if including...
-            # p = torch.mean(db, axis = [2,3,4])
-            # pred_in = torch.cat((pred_in, p.detach().cpu()), axis =-1)
             all_patches = torch.cat((all_patches, pred_in), dim=0)
 
     return all_patches
